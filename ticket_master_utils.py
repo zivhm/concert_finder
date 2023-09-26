@@ -27,7 +27,6 @@ def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, size=
     return upcoming_events
 
 
-
 def parse_event(event):
     name = event['name']
 

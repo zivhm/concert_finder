@@ -6,7 +6,6 @@ from collections import Counter
 
 
 def authenticate_to_spotify(client_id, client_secret, redirect_uri, scope):
-
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                    client_secret=client_secret,
                                                    redirect_uri=redirect_uri,
@@ -14,7 +13,7 @@ def authenticate_to_spotify(client_id, client_secret, redirect_uri, scope):
     return sp
 
 
-def get_followed_artists(sp, limit=5):
+def get_followed_artists(sp, limit=10):
     followed_artists = []
     cursor = None
 
@@ -34,10 +33,9 @@ def get_followed_artists(sp, limit=5):
     return followed_artists
 
 
-def get_liked_tracks(sp):
+def get_all_liked_tracks(sp, limit=50):
     liked_tracks = []
     offset = 0
-    limit = 50
 
     while True:
         results = sp.current_user_saved_tracks(offset=offset, limit=limit)
@@ -50,9 +48,22 @@ def get_liked_tracks(sp):
     return liked_tracks
 
 
-def get_artists_sorted_by_liked_tracks(sp, limit=5):
+def get_current_user_top_artists(sp, limit=10, time_range='medium_term'):
+    artists = sp.current_user_top_artists(limit=limit, time_range=time_range)
+    top_artists = [artist['name'] for artist in artists['items']]
+
+    return top_artists
+
+
+def get_current_user_top_tracks(sp, limit=10, time_range='medium_term'):
+    tracks = sp.current_user_top_tracks(limit=limit, time_range=time_range)
+    top_tracks = [(track['name'], ', '.join([artist['name'] for artist in track['artists']])) for track in tracks['items']]
+    return top_tracks
+
+
+def get_artists_sorted_by_liked_tracks(sp, limit=10):
     followed_artists = get_followed_artists(sp, limit)
-    liked_tracks = get_liked_tracks(sp)
+    liked_tracks = get_all_liked_tracks(sp)
 
     artist_likes_count = Counter()
     for track in liked_tracks:
@@ -80,5 +91,13 @@ if __name__ == "__main__":
 
     sp_ = authenticate_to_spotify(client_id, client_secret, redirect_uri, scope)
 
-    followed_artists_sorted = get_artists_sorted_by_liked_tracks(sp_)
-    print(followed_artists_sorted)
+    get_artists = get_followed_artists(sp=sp_, limit=10)
+    print(len(get_artists))
+    print(get_artists[0])
+
+    liked_tracks = get_all_liked_tracks(sp=sp_)
+    print(len(liked_tracks))
+    print(liked_tracks[0])
+
+    print(get_current_user_top_artists(sp_))
+    print(get_current_user_top_tracks(sp_))
