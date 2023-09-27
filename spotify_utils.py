@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-from collections import Counter
+from tqdm import tqdm
 
 
 def authenticate_to_spotify(client_id, client_secret, redirect_uri, scope):
@@ -13,72 +13,147 @@ def authenticate_to_spotify(client_id, client_secret, redirect_uri, scope):
     return sp
 
 
-def get_followed_artists(sp, limit=10):
+def get_followed_artists(sp, limit=50):
+    """
+    Returns a list of the user's followed artists.
+    """
+
     followed_artists = []
-    cursor = None
+    num_requests = (limit + 49) // 50
+    after_name = None
 
-    while True:
-        results = sp.current_user_followed_artists(limit=limit, after=cursor)
+    for i in range(num_requests):
+        if i == num_requests - 1:
+            final_limit = limit % 50 if limit % 50 != 0 else 50
+            results = sp.current_user_followed_artists(limit=final_limit, after=after_name)
+        else:
+            results = sp.current_user_followed_artists(limit=50, after=after_name)
 
-        if not results:
-            break
+        for x in results['artists']['items']:
+            followed_artists.append(x['name'])
 
-        followed_artists.extend(results['artists']['items'])
-
-        if results['artists']['cursors']['after']:
-            cursor = results['artists']['cursors']['after']
+        if 'next' in results['artists']:
+            after_name = results['artists']['cursors']['after']
         else:
             break
 
     return followed_artists
 
 
-def get_all_liked_tracks(sp, limit=50):
-    liked_tracks = []
+def get_current_user_top_artists(sp, limit=50, time_range='long_term'):
+    """
+    Returns a list of the user's top artists.
+    """
+
+    top_artists = []
+    num_requests = (limit + 49) // 50
     offset = 0
 
-    while True:
-        results = sp.current_user_saved_tracks(offset=offset, limit=limit)
-        liked_tracks.extend(results['items'])
+    for i in range(num_requests):
+        if i == num_requests - 1:
+            final_limit = limit % 50 if limit % 50 != 0 else 50
+            results = sp.current_user_top_artists(limit=final_limit, offset=offset, time_range=time_range)
+        else:
+            results = sp.current_user_top_artists(limit=50, offset=offset, time_range=time_range)
 
-        if len(results['items']) < limit:
+        offset = (offset + 50)
+        for x in results['items']:
+            top_artists.append(x['name'])
+
+    return top_artists
+
+
+def get_current_user_top_tracks(sp, limit=50):
+    """
+    returns a list of tuples (track_id, track_name)
+    """
+
+    top_tracks = []
+    num_requests = (limit + 49) // 50
+    offset = 0
+
+    for i in range(num_requests):
+        if i == num_requests - 1:
+            final_limit = limit % 50 if limit % 50 != 0 else 50
+            results = sp.current_user_top_tracks(limit=final_limit, offset=offset)
+        else:
+            results = sp.current_user_top_tracks(limit=50, offset=offset)
+
+        offset = (offset + 50)
+        for x in results['items']:
+            top_tracks.append((x['name'], x['artists'][0]['name']))
+
+    return top_tracks
+
+
+def get_liked_tracks(sp, limit=50):
+    """
+    returns a list of tuples (track_id, track_name)
+    """
+
+    liked_tracks = []
+    num_requests = (limit + 49) // 50
+    offset = 0
+
+    for i in range(num_requests):
+        if i == num_requests - 1:
+            final_limit = limit % 50 if limit % 50 != 0 else 50
+            results = sp.current_user_saved_tracks(limit=final_limit, offset=offset)
+        else:
+            results = sp.current_user_saved_tracks(limit=50, offset=offset)
+
+        offset = (offset + 50)
+        for x in results['items']:
+            liked_tracks.append((x['track']['name'], x['track']['artists'][0]['name']))
+
+    return liked_tracks
+
+
+def get_all_liked_tracks(sp):
+    """
+    Returns a list of tuples (track_name, track_artist) of all liked tracks.
+    """
+    liked_tracks = []
+    offset = 0
+    limit = 50
+
+    total_tracks = sp.current_user_saved_tracks(limit=1)['total']
+    num_requests = (total_tracks + limit - 1) // limit
+
+    for i in tqdm(range(num_requests), desc="Fetching Liked Tracks Batches"):
+        results = sp.current_user_saved_tracks(limit=limit, offset=offset)
+
+        if not results['items']:
             break
+
+        for item in results['items']:
+            track_name = item['track']['name']
+            track_artist = item['track']['artists'][0]['name'] if item['track']['artists'] else "Unknown Artist"
+            liked_tracks.append((track_name, track_artist))
+
         offset += limit
 
     return liked_tracks
 
 
-def get_current_user_top_artists(sp, limit=10, time_range='medium_term'):
-    artists = sp.current_user_top_artists(limit=limit, time_range=time_range)
-    top_artists = [artist['name'] for artist in artists['items']]
+def rank_artists_by_song_count(liked_tracks):
+    """
+    Takes a list of tuples (track_name, track_artist) of liked tracks,
+    and outputs a list of tuples (artist, song_count) ranked by song_count.
+    """
+    artist_count = {}
 
-    return top_artists
-
-
-def get_current_user_top_tracks(sp, limit=10, time_range='medium_term'):
-    tracks = sp.current_user_top_tracks(limit=limit, time_range=time_range)
-    top_tracks = [(track['name'], ', '.join([artist['name'] for artist in track['artists']])) for track in tracks['items']]
-    return top_tracks
-
-
-def get_artists_sorted_by_liked_tracks(sp, limit=10):
-    followed_artists = get_followed_artists(sp, limit)
-    liked_tracks = get_all_liked_tracks(sp)
-
-    artist_likes_count = Counter()
     for track in liked_tracks:
-        artists = track['track']['artists']
-        artist_names = [artist['name'] for artist in artists]
-        artist_likes_count.update(artist_names)
+        artist = track[1]
 
-    sorted_artists = sorted(
-        followed_artists,
-        key=lambda artist: artist_likes_count[artist['name']],
-        reverse=True
-    )
-    artist_names = [artist['name'] for artist in sorted_artists]
+        if artist not in artist_count:
+            artist_count[artist] = 0
 
-    return artist_names
+        artist_count[artist] += 1
+
+    ranked_artists = sorted(artist_count.items(), key=lambda item: item[1], reverse=True)
+
+    return ranked_artists
 
 
 if __name__ == "__main__":
@@ -91,13 +166,12 @@ if __name__ == "__main__":
 
     sp_ = authenticate_to_spotify(client_id, client_secret, redirect_uri, scope)
 
-    get_artists = get_followed_artists(sp=sp_, limit=10)
-    print(len(get_artists))
-    print(get_artists[0])
-
-    liked_tracks = get_all_liked_tracks(sp=sp_)
-    print(len(liked_tracks))
-    print(liked_tracks[0])
-
-    print(get_current_user_top_artists(sp_))
-    print(get_current_user_top_tracks(sp_))
+    current_top_tracks = get_current_user_top_tracks(sp_, limit=50)
+    current_top_artists = get_current_user_top_artists(sp_, limit=50)
+    # print("current_top_tracks")
+    # print(current_top_tracks)
+    # print("_"*200)
+    # print("current_top_artists")
+    # print(current_top_artists)
+    top = rank_artists_by_song_count(get_all_liked_tracks(sp_))
+    print("top")
