@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 from ticket_master_utils import search_events, parse_event
-from spotify_utils import get_artists_sorted_by_liked_tracks, authenticate_to_spotify
+from spotify_utils import authenticate_to_spotify, rank_artists_by_song_count, get_all_liked_tracks
+
 
 def main():
     load_dotenv()
@@ -11,27 +12,25 @@ def main():
     client_id = os.getenv('SPOTIFY_CLIENT_ID')
     client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
     redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
-    scope = os.getenv('SPOTIFY_SCOPE')
+    scope = os.getenv('SPOTIFY_APP_SCOPE')
 
     sp_ = authenticate_to_spotify(client_id, client_secret, redirect_uri, scope)
+    top_artists = rank_artists_by_song_count(get_all_liked_tracks(sp_))
 
-    limit = 30
+    artists = []
+    for artist in top_artists:
+        if artist[1] >= 3:
+            artists.append(artist[0])
 
-    followed_artists_sorted = get_artists_sorted_by_liked_tracks(sp_, limit=limit)
-    all_events = []
-    for artist in followed_artists_sorted:
-        print(artist)
-        events = search_events(artist, ticketmaster_api_key, ticketmaster_api_url)
-        if events is None:
-            pass
+    events_per_band = 7
+    for i in artists:
+        events = search_events(i, ticketmaster_api_key, ticketmaster_api_url, events_per_band)
 
-        else:
+        if events:
             for event in events:
-                event_info = parse_event(event)
-                all_events.append(event_info)
+                print(parse_event(band_name=i, event=event))
+                print('_' * 200)
 
-    for i in all_events:
-        print(i.get('name'))
-    #
+
 if __name__ == '__main__':
     main()

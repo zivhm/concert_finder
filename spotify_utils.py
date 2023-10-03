@@ -162,7 +162,7 @@ if __name__ == "__main__":
     client_id = os.getenv('SPOTIFY_CLIENT_ID')
     client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
     redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
-    scope = "user-library-read user-read-playback-state user-follow-read user-library-read user-read-playback-state"
+    scope = os.getenv('SPOTIFY_APP_SCOPE')
 
     sp_ = authenticate_to_spotify(client_id, client_secret, redirect_uri, scope)
 
@@ -174,4 +174,6 @@ if __name__ == "__main__":
     # print("current_top_artists")
     # print(current_top_artists)
     top = rank_artists_by_song_count(get_all_liked_tracks(sp_))
-    print("top")
+    print(top)
+
+
