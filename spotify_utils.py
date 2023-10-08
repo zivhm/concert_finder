@@ -40,7 +40,7 @@ def get_followed_artists(sp, limit=50):
     return followed_artists
 
 
-def get_current_user_top_artists(sp, limit=50, time_range='long_term'):
+def get_current_user_top_artists(sp, limit=100, time_range='long_term'):
     """
     Returns a list of the user's top artists.
     """
@@ -157,23 +157,24 @@ def rank_artists_by_song_count(liked_tracks):
 
 
 if __name__ == "__main__":
-    load_dotenv()
-
-    client_id = os.getenv('SPOTIFY_CLIENT_ID')
-    client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
-    redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
-    scope = os.getenv('SPOTIFY_APP_SCOPE')
-
-    sp_ = authenticate_to_spotify(client_id, client_secret, redirect_uri, scope)
-
-    current_top_tracks = get_current_user_top_tracks(sp_, limit=50)
-    current_top_artists = get_current_user_top_artists(sp_, limit=50)
-    # print("current_top_tracks")
-    # print(current_top_tracks)
-    # print("_"*200)
-    # print("current_top_artists")
-    # print(current_top_artists)
-    top = rank_artists_by_song_count(get_all_liked_tracks(sp_))
-    print(top)
-
+    ...
+    # load_dotenv()
+    #
+    # client_id = os.getenv('SPOTIFY_CLIENT_ID')
+    # client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+    # redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
+    # scope = os.getenv('SPOTIFY_APP_SCOPE')
+    #
+    # sp_ = authenticate_to_spotify(client_id, client_secret, redirect_uri, scope)
+    #
+    # current_top_tracks = get_current_user_top_tracks(sp_, limit=50)
+    # current_top_artists = get_current_user_top_artists(sp_, limit=50)
+    # # print("current_top_tracks")
+    # # print(current_top_tracks)
+    # # print("_"*200)
+    # # print("current_top_artists")
+    # # print(current_top_artists)
+    # top = rank_artists_by_song_count(get_all_liked_tracks(sp_))
+    # print(top)
+    #
 

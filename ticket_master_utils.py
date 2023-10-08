@@ -29,7 +29,7 @@ def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, size=
 
 
 def parse_event(band_name, event):
-    band_name = band_name.lower()
+    band_name = band_name
     event_name = event['name']
 
     if 'dates' in event:
@@ -47,7 +47,7 @@ def parse_event(band_name, event):
             timezone = event['dates']['timezone']
         else:
             timezone = "Unknown"
-
+    
     else:
         local_date = "Unknown"
         local_time = "Unknown"
@@ -59,6 +59,11 @@ def parse_event(band_name, event):
     else:
         event_datetime = datetime.strptime(f"{local_date} {local_time}", '%Y-%m-%d %H:%M:%S')
         formatted_datetime = event_datetime.strftime('%A, %B %d, %Y at %I:%M %p')\
+
+    if 'images' in event:
+        image_url = event['images'][-1].get('url', "Image not available")
+    else:
+        image_url = "Image not available"
 
     if '_embedded' in event and 'venues' in event['_embedded']:
         if event['_embedded']['venues']:
@@ -81,26 +86,28 @@ def parse_event(band_name, event):
         "timezone": timezone,
         "locale": event.get('locale', "Locale not available"),
         "venue_name": venue_name,
-        "venue_address": venue_address
+        "venue_address": venue_address,
+        "image": image_url
     }
 
     return event_info
 
 
 if __name__ == '__main__':
-    load_dotenv()
-
-    TICKETMASTER_API_KEY = os.getenv('TICKETMASTER_API_KEY')
-    TICKETMASTER_API_URL = 'https://app.ticketmaster.com/discovery/v2/events.json'
-
-    artists = ['Lorna Shore', 'The devil wears prada', 'gojira', 'thy art is murder', 'igorrr', 'bring me the horizon']
-
-    events_to_get = 3
-    for i in artists:
-        events = search_events(i, TICKETMASTER_API_KEY, TICKETMASTER_API_URL, events_to_get)
-
-        if events:
-            for event in events:
-                print(parse_event(band_name=i, event=event))
-                print('_' * 200)
-
+    ...
+    # load_dotenv()
+    #
+    # TICKETMASTER_API_KEY = os.getenv('TICKETMASTER_API_KEY')
+    # TICKETMASTER_API_URL = 'https://app.ticketmaster.com/discovery/v2/events.json'
+    #
+    # artists = ['Lorna Shore', 'The devil wears prada', 'gojira', 'thy art is murder', 'igorrr', 'bring me the horizon']
+    #
+    # events_to_get = 3
+    # for i in artists:
+    #     events = search_events(i, TICKETMASTER_API_KEY, TICKETMASTER_API_URL, events_to_get)
+    #
+    #     if events:
+    #         for event in events:
+    #             print(parse_event(band_name=i, event=event))
+    #             print('_' * 200)
+    #
