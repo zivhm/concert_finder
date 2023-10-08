@@ -1,4 +1,4 @@
-import os
+# import os
 import requests
 from dotenv import load_dotenv
 from datetime import datetime
@@ -26,6 +26,17 @@ def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, size=
         return None
 
     return upcoming_events
+
+
+def group_events_by_artist(events):
+    artist_events = defaultdict(list)
+    for event in events:
+        artist_name = event['band_name'].lower()
+        artist_events[artist_name].append(event)
+
+    artist_events_dict = dict(artist_events)
+
+    return artist_events_dict
 
 
 def parse_event(band_name, event):
