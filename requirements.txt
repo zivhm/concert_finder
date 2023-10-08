@@ -1,3 +1,6 @@
 spotipy
 python-dotenv
 requests
+tqdm
+streamlit
+streamlit-card

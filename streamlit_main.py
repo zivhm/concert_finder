@@ -24,6 +24,13 @@ def event_card(text):
             )
 
 
+# [theme]
+# primaryColor="#b19cd9"
+# backgroundColor="#f0f0f0"
+# secondaryBackgroundColor="#b4bcde"
+# textColor="#333333"
+
+
 load_dotenv()
 ticketmaster_api_key = os.getenv('TICKETMASTER_API_KEY')
 ticketmaster_api_url = os.getenv('TICKETMASTER_API_URL')
