@@ -4,11 +4,37 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 
-def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, size=10):
+# def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, size=10):
+#     ticketmaster_params = {
+#         'apikey': ticketmaster_api_key,
+#         'keyword': artist_name,
+#         'size': size
+#     }
+
+#     ticketmaster_response = requests.get(ticketmaster_api_url, params=ticketmaster_params)
+
+#     upcoming_events = []
+
+#     if ticketmaster_response.status_code == 200:
+#         ticketmaster_data = ticketmaster_response.json()
+#         for event in ticketmaster_data.get('_embedded', {}).get('events', []):
+#             upcoming_events.append(event)
+#     else:
+#         print(f'Error: {ticketmaster_response.status_code}')
+
+#     if len(upcoming_events) == 0:
+#         return None
+
+#     return upcoming_events
+
+
+def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, start_date, end_date, events_to_get=10):
     ticketmaster_params = {
         'apikey': ticketmaster_api_key,
         'keyword': artist_name,
-        'size': size
+        'startDateTime': start_date,  # Specify the start date
+        'endDateTime': end_date,      # Specify the end date
+        'size': events_to_get
     }
 
     ticketmaster_response = requests.get(ticketmaster_api_url, params=ticketmaster_params)
