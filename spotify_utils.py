@@ -1,11 +1,14 @@
-import os
-from dotenv import load_dotenv
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
 from tqdm import tqdm
+from spotipy.oauth2 import SpotifyOAuth
 
 
 def authenticate_to_spotify(client_id, client_secret, redirect_uri, scope):
+    """
+    This function initiates authentication to Spotify using Spotipy library with the provided client ID, client secret, redirect URI, and scope,
+    returning a Spotify API object.
+    """
+
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
                                                    client_secret=client_secret,
                                                    redirect_uri=redirect_uri,
@@ -113,6 +116,7 @@ def get_all_liked_tracks(sp):
     """
     Returns a list of tuples (track_name, track_artist) of all liked tracks.
     """
+
     liked_tracks = []
     offset = 0
     limit = 50
@@ -120,7 +124,7 @@ def get_all_liked_tracks(sp):
     total_tracks = sp.current_user_saved_tracks(limit=1)['total']
     num_requests = (total_tracks + limit - 1) // limit
 
-    for i in tqdm(range(num_requests), desc="Fetching Liked Tracks Batches"):
+    for _ in tqdm(range(num_requests), desc="Fetching Liked Tracks Batches"):
         results = sp.current_user_saved_tracks(limit=limit, offset=offset)
 
         if not results['items']:
@@ -141,6 +145,7 @@ def rank_artists_by_song_count(liked_tracks):
     Takes a list of tuples (track_name, track_artist) of liked tracks,
     and outputs a list of tuples (artist, song_count) ranked by song_count.
     """
+
     artist_count = {}
 
     for track in liked_tracks:
@@ -158,23 +163,3 @@ def rank_artists_by_song_count(liked_tracks):
 
 if __name__ == "__main__":
     ...
-    # load_dotenv()
-    #
-    # client_id = os.getenv('SPOTIFY_CLIENT_ID')
-    # client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
-    # redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
-    # scope = os.getenv('SPOTIFY_APP_SCOPE')
-    #
-    # sp_ = authenticate_to_spotify(client_id, client_secret, redirect_uri, scope)
-    #
-    # current_top_tracks = get_current_user_top_tracks(sp_, limit=50)
-    # current_top_artists = get_current_user_top_artists(sp_, limit=50)
-    # # print("current_top_tracks")
-    # # print(current_top_tracks)
-    # # print("_"*200)
-    # # print("current_top_artists")
-    # # print(current_top_artists)
-    # top = rank_artists_by_song_count(get_all_liked_tracks(sp_))
-    # print(top)
-    #
-

@@ -1,39 +1,18 @@
-# import os
 import requests
-from dotenv import load_dotenv
+from collections import defaultdict
 from datetime import datetime
 
 
-# def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, size=10):
-#     ticketmaster_params = {
-#         'apikey': ticketmaster_api_key,
-#         'keyword': artist_name,
-#         'size': size
-#     }
-
-#     ticketmaster_response = requests.get(ticketmaster_api_url, params=ticketmaster_params)
-
-#     upcoming_events = []
-
-#     if ticketmaster_response.status_code == 200:
-#         ticketmaster_data = ticketmaster_response.json()
-#         for event in ticketmaster_data.get('_embedded', {}).get('events', []):
-#             upcoming_events.append(event)
-#     else:
-#         print(f'Error: {ticketmaster_response.status_code}')
-
-#     if len(upcoming_events) == 0:
-#         return None
-
-#     return upcoming_events
-
-
 def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, start_date, end_date, events_to_get=10):
+    """
+    Retrieve upcoming events for a specified artist using the Ticketmaster API.
+    """
+
     ticketmaster_params = {
         'apikey': ticketmaster_api_key,
         'keyword': artist_name,
-        'startDateTime': start_date,  # Specify the start date
-        'endDateTime': end_date,      # Specify the end date
+        'startDateTime': start_date,
+        'endDateTime': end_date,
         'size': events_to_get
     }
 
@@ -55,6 +34,10 @@ def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, start
 
 
 def group_events_by_artist(events):
+    """
+    Groups a list of events by artist, creating a dictionary where keys are lowercase artist names and values are lists of corresponding events.
+    """
+
     artist_events = defaultdict(list)
     for event in events:
         artist_name = event['band_name'].lower()
@@ -66,6 +49,11 @@ def group_events_by_artist(events):
 
 
 def parse_event(band_name, event):
+    """
+    Parses event information, extracts details like band name, event name, date and time, venue, and image URL from the input event data,
+    and returns a structured dictionary.
+    """
+
     band_name = band_name
     event_name = event['name']
 
@@ -91,8 +79,8 @@ def parse_event(band_name, event):
         timezone = "Unknown"
 
     if local_date == "Unknown" or local_time == "Unknown":
-        event_datetime = None
         formatted_datetime = "Date and time unknown"
+
     else:
         event_datetime = datetime.strptime(f"{local_date} {local_time}", '%Y-%m-%d %H:%M:%S')
         formatted_datetime = event_datetime.strftime('%A, %B %d, %Y at %I:%M %p')\
@@ -132,19 +120,3 @@ def parse_event(band_name, event):
 
 if __name__ == '__main__':
     ...
-    # load_dotenv()
-    #
-    # TICKETMASTER_API_KEY = os.getenv('TICKETMASTER_API_KEY')
-    # TICKETMASTER_API_URL = 'https://app.ticketmaster.com/discovery/v2/events.json'
-    #
-    # artists = ['Lorna Shore', 'The devil wears prada', 'gojira', 'thy art is murder', 'igorrr', 'bring me the horizon']
-    #
-    # events_to_get = 3
-    # for i in artists:
-    #     events = search_events(i, TICKETMASTER_API_KEY, TICKETMASTER_API_URL, events_to_get)
-    #
-    #     if events:
-    #         for event in events:
-    #             print(parse_event(band_name=i, event=event))
-    #             print('_' * 200)
-    #
