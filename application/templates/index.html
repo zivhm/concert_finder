@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if not session.get('spotify_token') %}
+    <div class="hero-section">
+        <div class="container">
+            <h1 class="display-4 mb-4">Find Concerts for Your Favorite Artists</h1>
+            <a href="{{ url_for('login') }}" class="btn btn-success btn-lg">
+                <i class="fab fa-spotify"></i> Connect Spotify
+            </a>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
