@@ -1,31 +1,36 @@
-import requests
 from collections import defaultdict
 from datetime import datetime
 
+import requests
 
-def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, start_date, end_date, events_to_get=10):
+
+def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url,
+                  start_date=None, end_date=None, events_to_get=10):
+
     """
     Retrieve upcoming events for a specified artist using the Ticketmaster API.
     """
 
     ticketmaster_params = {
-        'apikey': ticketmaster_api_key,
-        'keyword': artist_name,
-        'startDateTime': start_date,
-        'endDateTime': end_date,
-        'size': events_to_get
+        "apikey": ticketmaster_api_key,
+        "keyword": artist_name,
+        "startDateTime": start_date,
+        "endDateTime": end_date,
+        "size": events_to_get,
     }
 
-    ticketmaster_response = requests.get(ticketmaster_api_url, params=ticketmaster_params)
+    ticketmaster_response = requests.get(
+        ticketmaster_api_url, params=ticketmaster_params, timeout=10
+    )
 
     upcoming_events = []
 
     if ticketmaster_response.status_code == 200:
         ticketmaster_data = ticketmaster_response.json()
-        for event in ticketmaster_data.get('_embedded', {}).get('events', []):
+        for event in ticketmaster_data.get("_embedded", {}).get("events", []):
             upcoming_events.append(event)
     else:
-        print(f'Error: {ticketmaster_response.status_code}')
+        print(f"Error: {ticketmaster_response.status_code}")
 
     if len(upcoming_events) == 0:
         return None
@@ -35,12 +40,14 @@ def search_events(artist_name, ticketmaster_api_key, ticketmaster_api_url, start
 
 def group_events_by_artist(events):
     """
-    Groups a list of events by artist, creating a dictionary where keys are lowercase artist names and values are lists of corresponding events.
+    Groups a list of events by artist,
+    creating a dictionary where keys are lowercase artist names and values are lists
+    of corresponding events.
     """
 
     artist_events = defaultdict(list)
     for event in events:
-        artist_name = event['band_name'].lower()
+        artist_name = event["band_name"].lower()
         artist_events[artist_name].append(event)
 
     artist_events_dict = dict(artist_events)
@@ -48,85 +55,143 @@ def group_events_by_artist(events):
     return artist_events_dict
 
 
-def parse_event(band_name, event):
-    """
-    Parses event information, extracts details like band name, event name, date and time, venue, and image URL from the input event data,
-    and returns a structured dictionary.
-    """
+# def parse_event(band_name, event):
+#     """
+#     Parses event information, extracts details like
+#     band name, event name, date and time, venue,
+#     and image URL from the input event data,
+#     and returns a structured dictionary.
+#     """
 
-    band_name = band_name
-    event_name = event['name']
+#     band_name = band_name
+#     event_name = event["name"]
 
-    if 'dates' in event:
-        if 'start' in event['dates'] and 'localDate' in event['dates']['start']:
-            local_date = event['dates']['start']['localDate']
-        else:
-            local_date = "Unknown"
+#     if "dates" in event:
+#         if "start" in event["dates"] and "localDate" in event["dates"]["start"]:
+#             local_date = event["dates"]["start"]["localDate"]
+#         else:
+#             local_date = "Unknown"
 
-        if 'start' in event['dates'] and 'localTime' in event['dates']['start']:
-            local_time = event['dates']['start']['localTime']
-        else:
-            local_time = "Unknown"
+#         if "start" in event["dates"] and "localTime" in event["dates"]["start"]:
+#             local_time = event["dates"]["start"]["localTime"]
+#         else:
+#             local_time = "Unknown"
 
-        if 'timezone' in event['dates']:
-            timezone = event['dates']['timezone']
-        else:
-            timezone = "Unknown"
-    
-    else:
-        local_date = "Unknown"
-        local_time = "Unknown"
-        timezone = "Unknown"
+#         if "timezone" in event["dates"]:
+#             timezone = event["dates"]["timezone"]
+#         else:
+#             timezone = "Unknown"
 
-    # if local_date == "Unknown" or local_time == "Unknown":
-    #     formatted_datetime = "Date and time unknown"
+#     else:
+#         local_date = "Unknown"
+#         local_time = "Unknown"
+#         timezone = "Unknown"
 
-    # else:
-    #     event_datetime = datetime.strptime(f"{local_date} {local_time}", '%Y-%m-%d %H:%M:%S')
-    #     formatted_datetime = event_datetime.strftime('%A, %B %d, %Y at %I:%M %p')
+#     if local_date == "Unknown" or local_time == "Unknown":
+#         formatted_datetime = "Date to be announced"
+
+#     else:
+#         try:
+#             event_datetime = datetime.strptime(
+#                 f"{local_date} {local_time}", "%Y-%m-%d %H:%M:%S"
+#             )
+#             formatted_datetime = event_datetime.strftime("%A, %B %d, %Y at %I:%M %p")
+#         except ValueError:
+#             formatted_datetime = "Date to be announced"
+
+#     if "images" in event:
+#         image_url = event["images"][-1].get("url", "Image not available")
+#     else:
+#         image_url = "Image not available"
+
+#     if "_embedded" in event and "venues" in event["_embedded"]:
+#         if event["_embedded"]["venues"]:
+#             venue_name = event["_embedded"]["venues"][0].get(
+#                 "name", "Venue name not available"
+#             )
+#             venue_address = (
+#                 event["_embedded"]["venues"][0]
+#                 .get("address", {})
+#                 .get("line1", "Venue address not available")
+#             )
+#         else:
+#             venue_name = "Venue information not available"
+#             venue_address = "Venue information not available"
+
+#     else:
+#         venue_name = "Venue information not available"
+#         venue_address = "Venue information not available"
+
+#     event_info = {
+#         "band_name": band_name,
+#         "event_name": event_name,
+#         "date_and_time": f"{local_date} {local_time} ({timezone})",
+#         "start_datetime": formatted_datetime,
+#         "event_url": event.get("url", "URL not available"),
+#         "timezone": timezone,
+#         "locale": event.get("locale", "Locale not available"),
+#         "venue_name": venue_name,
+#         "venue_address": venue_address,
+#         "image": image_url,
+#     }
+
+#     return event_info
+
+def get_event_date_time(event):
+    """Extracts and formats event date, time, and timezone."""
+    start_info = event.get("dates", {}).get("start", {})
+    local_date = start_info.get("localDate", "Unknown")
+    local_time = start_info.get("localTime", "Unknown")
+    timezone = event.get("dates", {}).get("timezone", "Unknown")
 
     if local_date == "Unknown" or local_time == "Unknown":
+        return "Date to be announced", local_date, local_time, timezone
+
+    try:
+        event_datetime = datetime.strptime(f"{local_date} {local_time}", "%Y-%m-%d %H:%M:%S")
+        formatted_datetime = event_datetime.strftime("%A, %B %d, %Y at %I:%M %p")
+    except ValueError:
         formatted_datetime = "Date to be announced"
 
-    else:
-        try:
-            event_datetime = datetime.strptime(f"{local_date} {local_time}", '%Y-%m-%d %H:%M:%S')
-            formatted_datetime = event_datetime.strftime('%A, %B %d, %Y at %I:%M %p')
-        except:
-            formatted_datetime = "Date to be announced"
+    return formatted_datetime, local_date, local_time, timezone
 
-    if 'images' in event:
-        image_url = event['images'][-1].get('url', "Image not available")
-    else:
-        image_url = "Image not available"
-
-    if '_embedded' in event and 'venues' in event['_embedded']:
-        if event['_embedded']['venues']:
-            venue_name = event['_embedded']['venues'][0].get('name', "Venue name not available")
-            venue_address = event['_embedded']['venues'][0].get('address', {}).get('line1', "Venue address not available")
-        else:
-            venue_name = "Venue information not available"
-            venue_address = "Venue information not available"
-
+def get_venue_info(event):
+    """Extracts venue name and address."""
+    venues = event.get("_embedded", {}).get("venues", [])
+    if venues:
+        venue = venues[0]  # First venue in the list
+        venue_name = venue.get("name", "Venue name not available")
+        venue_address = venue.get("address", {}).get("line1", "Venue address not available")
     else:
         venue_name = "Venue information not available"
         venue_address = "Venue information not available"
 
-    event_info = {
+    return venue_name, venue_address
+
+def parse_event(band_name, event):
+    """
+    Parses event information, extracts details like
+    band name, event name, date and time, venue,
+    and image URL from the input event data,
+    and returns a structured dictionary.
+    """
+    formatted_datetime, local_date, local_time, timezone = get_event_date_time(event)
+    venue_name, venue_address = get_venue_info(event)
+    image_url = event.get("images", [{}])[-1].get("url", "Image not available")
+
+    return {
         "band_name": band_name,
-        "event_name": event_name,
+        "event_name": event.get("name", "Event name not available"),
         "date_and_time": f"{local_date} {local_time} ({timezone})",
         "start_datetime": formatted_datetime,
-        "event_url": event.get('url', "URL not available"),
+        "event_url": event.get("url", "URL not available"),
         "timezone": timezone,
-        "locale": event.get('locale', "Locale not available"),
+        "locale": event.get("locale", "Locale not available"),
         "venue_name": venue_name,
         "venue_address": venue_address,
-        "image": image_url
+        "image": image_url,
     }
 
-    return event_info
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     ...
