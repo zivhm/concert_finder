@@ -4,37 +4,113 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Welcome to Concert Finder</h1>
-        <div>
-            <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    <!-- Onboarding Walkthrough -->
+    <div class="onboarding-steps mb-5">
+        <div class="card border-success">
+            <div class="card-body">
+                <h4 class="text-success"><i class="fas fa-compass"></i> Getting Started</h4>
+                <ol>
+                    <li>Your top artists are automatically analyzed from your Spotify data</li>
+                    <li>Upcoming events are shown based on your most listened artists</li>
+                    <li>Click any event card to purchase tickets through Ticketmaster</li>
+                </ol>
+                <button class="btn btn-sm btn-outline-success dismiss-guide">Got it!</button>
+            </div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4>Your Top Artists</h4>
+    <!-- Filter Section -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <h4 class="mb-3"><i class="fas fa-filter"></i> Filter Events</h4>
+            <form id="filterForm" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Artist/Band</label>
+                    <select class="form-select" id="artistFilter">
+                        <option value="">All Artists ({{ top_artists|length }})</option>
+                        {% for artist in top_artists %}
+                        <option value="{{ artist }}">{{ artist }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="card-body">
+                <div class="col-md-4">
+                    <label class="form-label">Date Range</label>
+                    <input type="date" class="form-control" id="dateFilter">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Location</label>
+                    <input type="text" class="form-control" placeholder="City or Venue" id="locationFilter">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <button type="reset" class="btn btn-outline-secondary">Clear Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <h4 class="mb-3"><i class="fas fa-sliders-h"></i> Display Settings</h4>
+            <form method="GET" action="{{ url_for('dashboard') }}" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Number of Artists</label>
+                    <input type="number" 
+                           class="form-control" 
+                           name="num_artists" 
+                           min="1" 
+                           max="50" 
+                           value="{{ request.args.get('num_artists', '10') }}"> 
+                    <small class="text-muted">Between 1-50 artists</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Events per Artist</label>
+                    <input type="number" 
+                           class="form-control" 
+                           name="events_per_artist" 
+                           min="1" 
+                           max="20" 
+                           value="{{ request.args.get('events_per_artist', '5') }}">
+                    <small class="text-muted">Between 1-20 events</small>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Apply Settings</button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Artist Profile Section -->
+    <div class="card shadow mb-5">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Your Music Profile</h4>
+            <button class="btn btn-sm btn-light" data-bs-toggle="collapse" data-bs-target="#artistStats">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+        <div class="card-body collapse show" id="artistStats">
+            <div class="row">
+                <div class="col-md-6 border-end">
+                    <h5 class="text-muted mb-3"><i class="fas fa-star"></i> Top Artists</h5>
                     {% for artist in top_artists %}
-                    <span class="artist-badge">{{ loop.index }}. {{ artist }}</span>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-primary me-2">{{ loop.index }}</span>
+                        <span class="artist-name">{{ artist }}</span>
+                    </div>
                     {% endfor %}
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h4>Most Played Artists</h4>
-                </div>
-                <div class="card-body">
+                <div class="col-md-6">
+                    <h5 class="text-muted mb-3"><i class="fas fa-chart-line"></i> Most Played</h5>
                     {% for artist, count in ranked_artists %}
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>{{ artist }}</span>
-                        <span class="badge bg-secondary">{{ count }} tracks</span>
+                    <div class="progress progress-bar-artist mb-2">
+                        <div class="progress-bar bg-success" style="width: {{ (count/ranked_artists[0][1])*100 }}%">
+                            <span class="d-flex justify-content-between px-2">
+                                <span>{{ artist }}</span>
+                                <span>{{ count }}</span>
+                            </span>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -42,30 +118,70 @@
         </div>
     </div>
 
-    <h3 class="mb-4">Upcoming Events</h3>
-    <div class="row">
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle"></i> 
+        Showing {{ events|length }} events from 
+        {{ top_artists|length }} artists with 
+        {{ events_per_artist }} events per artist
+    </div>
+
+    <!-- Events Section -->
+    <h3 class="mb-4"><i class="fas fa-calendar-alt"></i> Upcoming Events</h3>
+    <div class="row" id="eventsContainer">
         {% for event in events %}
-        <div class="col-md-4">
-            <div class="card event-card shadow">
-                <img src="{{ event.image }}" class="card-img-top" style="height: 200px; object-fit: cover;">
-                <div class="card-body">
-                    <h5 class="card-title">{{ event.event_name }}</h5>
-                    <p class="text-muted">{{ event.band_name }}</p>
-                    <p class="card-text">
-                        <i class="fas fa-calendar-alt"></i> {{ event.start_datetime }}<br>
-                        <i class="fas fa-map-marker-alt"></i> {{ event.venue_name }}
-                    </p>
-                    <a href="{{ event.event_url }}" target="_blank" class="btn btn-primary">
-                        Get Tickets <i class="fas fa-external-link-alt"></i>
+        <div class="col-md-4 mb-4">
+            <div class="card event-card h-100" 
+                 data-artist="{{ event.band_name }}"
+                 data-date="{{ event.start_datetime.split(' ')[0] if event.start_datetime != 'Date and time unknown' else '' }}"
+                 data-location="{{ event.venue_name }}">
+                
+                <!-- Image -->
+                <img src="{{ event.image }}" alt="{{ event.event_name }}">
+                
+                <!-- Overlay Content -->
+                <div class="card-body event-card-content">
+                    {% if event.start_datetime != "Date and time unknown" %}
+                    <div class="event-date-ribbon">
+                        {{ event.start_datetime|datetime_format('%b %d') }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="position-absolute top-0 start-0 p-3">
+                        <span class="badge bg-dark">{{ event.band_name }}</span>
+                    </div>
+                    
+                    <h5 class="card-title mt-4">{{ event.event_name }}</h5>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        <span class="small">{{ event.venue_name|truncate(25) }}</span>
+                    </div>
+                    
+                    <a href="{{ event.event_url }}" target="_blank" class="btn btn-success w-100">
+                        <i class="fas fa-ticket-alt"></i> Get Tickets
                     </a>
                 </div>
             </div>
         </div>
         {% else %}
         <div class="col-12">
-            <div class="alert alert-info">No upcoming events found for your top artists.</div>
+            <div class="empty-state text-center py-5">
+                <h3 class="mb-3">No upcoming events found 🎸</h3>
+                <p class="text-muted">We'll keep monitoring your artists and notify you when new events appear!</p>
+                <div class="mt-4">
+                    <button class="btn btn-outline-secondary me-2">Explore Popular Events</button>
+                    <button class="btn btn-outline-secondary">Adjust Location</button>
+                </div>
+            </div>
         </div>
         {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-4 text-center">
+        <small class="text-muted">
+            Showing {{ events|length }} events across {{ top_artists|length }} artists
+        </small>
     </div>
 </div>
 {% endblock %}

@@ -78,12 +78,22 @@ def parse_event(band_name, event):
         local_time = "Unknown"
         timezone = "Unknown"
 
+    # if local_date == "Unknown" or local_time == "Unknown":
+    #     formatted_datetime = "Date and time unknown"
+
+    # else:
+    #     event_datetime = datetime.strptime(f"{local_date} {local_time}", '%Y-%m-%d %H:%M:%S')
+    #     formatted_datetime = event_datetime.strftime('%A, %B %d, %Y at %I:%M %p')
+
     if local_date == "Unknown" or local_time == "Unknown":
-        formatted_datetime = "Date and time unknown"
+        formatted_datetime = "Date to be announced"
 
     else:
-        event_datetime = datetime.strptime(f"{local_date} {local_time}", '%Y-%m-%d %H:%M:%S')
-        formatted_datetime = event_datetime.strftime('%A, %B %d, %Y at %I:%M %p')\
+        try:
+            event_datetime = datetime.strptime(f"{local_date} {local_time}", '%Y-%m-%d %H:%M:%S')
+            formatted_datetime = event_datetime.strftime('%A, %B %d, %Y at %I:%M %p')
+        except:
+            formatted_datetime = "Date to be announced"
 
     if 'images' in event:
         image_url = event['images'][-1].get('url', "Image not available")
